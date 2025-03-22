@@ -33,7 +33,6 @@ class Main(Frame):
         
         self.mostrar_pantalla_inicio()
         
-        # Inicializar pygame.mixer para manejar los sonidos
         pygame.mixer.init()
         
         # Cargar sonidos
