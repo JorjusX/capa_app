@@ -66,6 +66,7 @@ class Capa1:
     def eliminar_vida(self):
         """Reduce las vidas si una capa ha desaparecido."""
         if self.vida_perdida:
+            self.sonido_perder_vida.play()
             self.vidas -= 1
             self.vida_perdida = False
         return self.vidas
