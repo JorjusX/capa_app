@@ -1,2 +1,0 @@
-﻿# capa_app
-# Tiro al Capa
