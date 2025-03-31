@@ -2,27 +2,29 @@ import random
 import time
 import pygame
 import os
+from tkinter import PhotoImage
 
-class Capa1:
-    def __init__(self, canvas, imagen, velocidad_base, vidas, base_path):
+class Capa2:
+    def __init__(self, canvas, vidas, base_path):
         self.canvas = canvas
-        self.imagen = imagen
-        self.velocidad_base = velocidad_base
+        self.base_path = base_path
+        self.velocidad_base = 10
         self.vidas = vidas
         self.capas = []
         self.vida_perdida=False
 
-        self.base_path = base_path
+        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa1.png'))
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
 
-    def crear_capas(self, cantidad=5):
-        """Crea una cantidad de capas con posiciones y velocidades aleatorias."""
+        self.cantidad = 1
+
+    def crear_capas(self):
         self.capas = []
-        for _ in range(cantidad):
+        for _ in range(self.cantidad):
             capa = self.canvas.create_image(
                 random.randint(50, 750), random.randint(50, 275), image=self.imagen
             )
-            velocidad = random.randint(self.velocidad_base, self.velocidad_base + 4)
+            velocidad = random.randint(self.velocidad_base, self.velocidad_base + 10)
             direccion_x = random.choice([-1, 1])
             direccion_y = random.choice([-1, 1])
             tiempo_aparicion = time.time()
@@ -37,7 +39,6 @@ class Capa1:
             })
 
     def mover_capas(self):
-        """Mueve las capas en el canvas y gestiona colisiones con los bordes."""
         for capa in self.capas[:]:
             self.canvas.move(
                 capa["capa"],
@@ -55,7 +56,6 @@ class Capa1:
                 
 
     def eliminar_capa(self, capa):
-        """Elimina una capa del canvas y de la lista."""
         self.capas.remove(capa)
         self.canvas.delete(capa["capa"])
 
@@ -68,7 +68,6 @@ class Capa1:
         
 
     def verificar_colision(self, disparo_bbox):
-        """Verifica si un disparo colisiona con alguna capa."""
         for capa in self.capas:
             capa_bbox = self.canvas.bbox(capa["capa"])
             if self.colision(disparo_bbox, capa_bbox):
@@ -78,7 +77,6 @@ class Capa1:
 
     @staticmethod
     def colision(bbox1, bbox2):
-        """Determina si dos bounding boxes colisionan."""
         return not (
             bbox1[2] < bbox2[0] or bbox1[0] > bbox2[2] or
             bbox1[3] < bbox2[1] or bbox1[1] > bbox2[3]
