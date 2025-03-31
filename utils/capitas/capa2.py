@@ -11,7 +11,7 @@ class Capa2:
         self.velocidad_base = 10
         self.vidas = vidas
         self.capas = []
-        self.vida_perdida=False
+        self.vida_perdida = False
 
         self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa1.png'))
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
@@ -51,21 +51,18 @@ class Capa2:
             if pos[1] <= 0 or pos[1] >= 400:
                 capa["direccion_y"] *= -1
             if time.time() - capa["tiempo_aparicion"] > capa["tiempo_vida"]:
-                self.vida_perdida=True
+                self.vida_perdida = True
                 self.eliminar_capa(capa)
-                
 
     def eliminar_capa(self, capa):
         self.capas.remove(capa)
         self.canvas.delete(capa["capa"])
 
     def eliminar_vida(self):
-        if self.vida_perdida==True:
-            self.vidas-=1
-        vidas = self.vidas
-        self.vida_perdida=False
-        return vidas
-        
+        if self.vida_perdida:
+            self.vidas -= 1
+            self.vida_perdida = False
+        return self.vidas
 
     def verificar_colision(self, disparo_bbox):
         for capa in self.capas:
@@ -74,6 +71,12 @@ class Capa2:
                 self.eliminar_capa(capa)
                 return True
         return False
+
+    def actualizar(self):
+        self.mover_capas()
+        if not self.capas:
+            self.crear_capas()
+        return self.eliminar_vida()
 
     @staticmethod
     def colision(bbox1, bbox2):

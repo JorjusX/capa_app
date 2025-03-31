@@ -1,8 +1,11 @@
 from tkinter import *
 import pygame
 import os
+import pandas as pd
 from utils.capitas.capa1 import Capa1
 from utils.capitas.capa2 import Capa2
+import csv
+from datetime import datetime
 
 class Main(Frame):
     def __init__(self, master):
@@ -18,6 +21,7 @@ class Main(Frame):
         
         self.imagen_capa1 = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa1.png'))
         self.imagen_mira = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/mira.png'))
+        self.puntuaciones = open("puntuaciones.csv")
                 
         self.disparos = []
         self.score = 0
@@ -25,9 +29,11 @@ class Main(Frame):
         self.fallos = 0
         self.velocidad_base = 3
         self.rondas_superadas = 0
+        self.hight_score = self.mejor_puntuacion()
+        
+        self.juego_iniciado = False
         
         self.canvas.bind("<Button-1>", self.disparar)
-        self.canvas.config(cursor="none")
         self.canvas.bind("<Motion>", self.mover_mira)
         self.canvas.bind("<Button-1>", self.dibujar_mira)
         
@@ -43,14 +49,28 @@ class Main(Frame):
         self.capa2 = Capa2(self.canvas, self.vidas, self.base_path)
         
     def mostrar_pantalla_inicio(self):
+        self.juego_iniciado = False
         self.canvas.delete("all")
+        self.canvas.unbind("<Button-1>")
         self.canvas.create_image(400, 200, image=self.fondo)
         self.canvas.create_text(400, 150, text="Tiro al Capa", font=("Arial", 32), fill="white")
         self.canvas.create_text(400, 200, text="Haz clic para empezar", font=("Arial", 24), fill="white")
-        self.canvas.bind("<Button-1>", self.iniciar_juego)
+        
+        self.canvas.create_rectangle(50, 350, 250, 250, fill="skyblue", tags=("inicio",))
+        self.canvas.create_text(150, 300, text="Modo normal", font=("Arial", 24), fill="purple", tags=("inicio",))
+        self.canvas.create_text(150, 325, text=f"Puntuacion maxima: {self.hight_score}", font=("Arial", 10), fill="purple", tags=("inicio",))
+
+        self.canvas.create_rectangle(550, 350, 750, 250, fill="skyblue", tags=("inicio2", ))
+        self.canvas.create_text(650, 300, text="Modo durisimo", font=("Arial", 20), fill="white", tags=("inicio2",))
+        self.canvas.tag_bind("inicio", "<Button-1>", self.iniciar_juego)
+        self.canvas.tag_bind("inicio2", "<Button-1>", self.iniciar_juego)
                
     def iniciar_juego(self, event):
+        self.juego_iniciado = True
+        self.canvas.config(cursor="none")
         self.canvas.delete("all")
+        self.root.unbind("<Button-1>")  
+        self.root.after(100, lambda: self.root.bind("<Button-1>", self.disparar))
         self.score = 0
         self.vidas = 3
         self.fallos = 0
@@ -59,11 +79,15 @@ class Main(Frame):
         self.canvas.create_image(400, 200, image=self.fondo)
         self.capa1.crear_capas()
         self.mira = self.canvas.create_image(0, 0, image=self.imagen_mira)
-        self.canvas.bind("<Button-1>", self.disparar)
         self.actualizar_puntuacion()
+        self.canvas.bind("<Motion>", self.mover_mira)
         self.root.after(100, self.actualizar_objetos)
         
+        
     def disparar(self, event):
+        if not self.juego_iniciado:
+            return
+        
         self.sonido_disparo.play()
         
         disparo = self.canvas.create_oval(event.x-5, event.y-5, event.x+5, event.y+5, fill="red")
@@ -76,7 +100,7 @@ class Main(Frame):
             self.sonido_explosion.play()
         elif self.capa2.verificar_colision(disparo_bbox):
             self.canvas.delete(disparo)
-            self.score+=20
+            self.score += 20
             self.actualizar_puntuacion()
             self.sonido_explosion.play()
         else:
@@ -92,18 +116,17 @@ class Main(Frame):
         self.canvas.coords(self.mira, event.x, event.y)
         
     def actualizar_objetos(self):
-        self.capa1.mover_capas()
-        self.capa2.mover_capas()
-        if not self.capa1.capas:
-            if not self.capa2.capas:
-                self.velocidad_base += 1
-                self.rondas_superadas += 1
-                self.capa1.crear_capas()
-                vidas1=self.capa1.eliminar_vida()
-                vidas2=self.capa2.eliminar_vida()
-                self.vidas=min(vidas1, vidas2)
-                if self.vidas<=0: self.game_over()
-                self.dificultar()
+        vidas_capa1 = self.capa1.actualizar()
+
+        if self.rondas_superadas >= 5:
+            vidas_capa2 = self.capa2.actualizar()
+        else:
+            vidas_capa2 = self.vidas
+
+        self.vidas = min(vidas_capa1, vidas_capa2)
+        if self.vidas <= 0:
+            self.game_over()
+
         self.actualizar_puntuacion()
         self.root.after(100, self.actualizar_objetos)
 
@@ -126,7 +149,22 @@ class Main(Frame):
         self.canvas.create_text(400, 230, text=f"Fallos: {self.fallos}", font=("Arial", 24), fill="white")
         self.canvas.create_text(400, 260, text=f"Rondas superadas: {self.rondas_superadas}", font=("Arial", 24), fill="white")
         self.canvas.create_text(400, 300, text="Haz clic para volver a intentarlo", font=("Arial", 24), fill="white")
+        with open(os.path.join(self.base_path, "puntuaciones.csv"), mode="a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.score, self.fallos, self.rondas_superadas])
         self.canvas.bind("<Button-1>", self.iniciar_juego)
+
+    def mejor_puntuacion(self):
+        try:
+            with open(os.path.join(self.base_path, "puntuaciones.csv"), mode="r") as file:
+                reader = csv.reader(file)
+                next(reader)
+                puntuaciones = [int(row[1]) for row in reader if row]
+                return max(puntuaciones) if puntuaciones else 0
+        except FileNotFoundError:
+            return 0
+        except ValueError:
+            return 0
         
 if __name__ == "__main__":
     root = Tk()
