@@ -15,14 +15,19 @@ class Capa1:
         self.base_path = base_path
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
 
-    def crear_capas(self, cantidad=5):
+    def crear_capas(self):
+        incremento_velocidad=0
+        cantidad=5
         """Crea una cantidad de capas con posiciones y velocidades aleatorias."""
         self.capas = []
         for _ in range(cantidad):
             capa = self.canvas.create_image(
                 random.randint(50, 750), random.randint(50, 275), image=self.imagen
             )
-            velocidad = random.randint(self.velocidad_base, self.velocidad_base + 4)
+            velocidad = random.randint(
+                self.velocidad_base + incremento_velocidad,
+                self.velocidad_base + 4 + incremento_velocidad
+            )
             direccion_x = random.choice([-1, 1])
             direccion_y = random.choice([-1, 1])
             tiempo_aparicion = time.time()

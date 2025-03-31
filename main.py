@@ -111,7 +111,6 @@ class Main(Frame):
         self.canvas.delete(self.mira)
         self.mira = self.canvas.create_image(event.x,event.y,image=self.imagen_mira)
         
-        
     def mover_mira(self, event):
         self.canvas.coords(self.mira, event.x, event.y)
         
@@ -129,6 +128,7 @@ class Main(Frame):
 
         self.actualizar_puntuacion()
         self.root.after(100, self.actualizar_objetos)
+        self.dificultar()
 
     def dificultar(self):
         if self.rondas_superadas>5:
