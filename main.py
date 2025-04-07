@@ -46,6 +46,7 @@ class Main(Frame):
 
         self.capa1 = Capa1(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa2 = Capa2(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
+        self.capas = [self.capa1, self.capa2]
         
     def mostrar_pantalla_inicio(self):
         self.juego_iniciado = False
@@ -127,6 +128,9 @@ class Main(Frame):
         self.actualizar_puntuacion()
         self.root.after(100, self.actualizar_objetos)
         self.dificultar()
+        
+
+        
 
     def dificultar(self):
         if self.rondas_superadas>5:
