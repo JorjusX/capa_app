@@ -2,32 +2,36 @@ import random
 import time
 import pygame
 import os
+from tkinter import PhotoImage
+from tkinter import Canvas
 
 class Capa1:
-    def __init__(self, canvas, imagen, velocidad_base, vidas, base_path):
+    def __init__(self, canvas, vidas, base_path):
         self.canvas = canvas
-        self.imagen = imagen
-        self.velocidad_base = velocidad_base
+        self.base_path = base_path
+        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa1.png'))
+        self.velocidad_base = 3
         self.vidas = vidas
         self.capas = []
         self.vida_perdida = False
+        self.i_velocidad = 0
+        self.cantidad = 5
 
-        self.base_path = base_path
+        
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
 
     def crear_capas(self):
-        incremento_velocidad=0
-        cantidad=5
         """Crea una cantidad de capas con posiciones y velocidades aleatorias."""
         self.capas = []
-        for _ in range(cantidad):
+        for _ in range(self.cantidad):
             capa = self.canvas.create_image(
                 random.randint(50, 750), random.randint(50, 275), image=self.imagen
             )
             velocidad = random.randint(
-                self.velocidad_base + incremento_velocidad,
-                self.velocidad_base + 4 + incremento_velocidad
-            )
+                self.velocidad_base + self.i_velocidad,
+                self.velocidad_base + 4 + self.i_velocidad
+                )
+ 
             direccion_x = random.choice([-1, 1])
             direccion_y = random.choice([-1, 1])
             tiempo_aparicion = time.time()
@@ -84,6 +88,7 @@ class Capa1:
         """Actualiza el estado de las capas: movimiento, eliminación y creación."""
         self.mover_capas()
         if not self.capas:
+            self.i_velocidad += 1
             self.crear_capas()
         return self.eliminar_vida()
 

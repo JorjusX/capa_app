@@ -19,7 +19,6 @@ class Main(Frame):
         self.canvas.config(width=1920, height=678)
         self.canvas.pack()
         
-        self.imagen_capa1 = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa1.png'))
         self.imagen_mira = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/mira.png'))
         self.puntuaciones = open("puntuaciones.csv")
                 
@@ -27,7 +26,6 @@ class Main(Frame):
         self.score = 0
         self.vidas = 3
         self.fallos = 0
-        self.velocidad_base = 3
         self.rondas_superadas = 0
         self.hight_score = self.mejor_puntuacion()
         
@@ -45,7 +43,7 @@ class Main(Frame):
         self.sonido_explosion = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/explosion.wav'))
         self.sonido_game_over = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/game_over.wav'))
 
-        self.capa1 = Capa1(self.canvas, self.imagen_capa1, self.velocidad_base, self.vidas, self.base_path)
+        self.capa1 = Capa1(self.canvas, self.vidas, self.base_path)
         self.capa2 = Capa2(self.canvas, self.vidas, self.base_path)
         
     def mostrar_pantalla_inicio(self):
@@ -74,7 +72,6 @@ class Main(Frame):
         self.score = 0
         self.vidas = 3
         self.fallos = 0
-        self.velocidad_base = 3
         self.rondas_superadas = 0
         self.canvas.create_image(400, 200, image=self.fondo)
         self.capa1.crear_capas()
