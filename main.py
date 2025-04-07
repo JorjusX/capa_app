@@ -27,6 +27,7 @@ class Main(Frame):
         self.vidas = 3
         self.fallos = 0
         self.rondas_superadas = 0
+        self.tiempo_vida = 7
         self.hight_score = self.mejor_puntuacion()
         
         self.juego_iniciado = False
@@ -43,8 +44,8 @@ class Main(Frame):
         self.sonido_explosion = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/explosion.wav'))
         self.sonido_game_over = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/game_over.wav'))
 
-        self.capa1 = Capa1(self.canvas, self.vidas, self.base_path)
-        self.capa2 = Capa2(self.canvas, self.vidas, self.base_path)
+        self.capa1 = Capa1(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
+        self.capa2 = Capa2(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         
     def mostrar_pantalla_inicio(self):
         self.juego_iniciado = False
@@ -167,7 +168,7 @@ if __name__ == "__main__":
     root = Tk()
     root.title('Tiro al Capa')
     root.geometry('800x400')
-    root.call('wm', 'iconphoto', root._w, PhotoImage(file=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src/imgs/capa2.png')))    
+    root.call('wm', 'iconphoto', root._w, PhotoImage(file=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src/imgs/capa_icon.png')))
     app = Main(root)
     root.resizable(False, False)
     app.mainloop()

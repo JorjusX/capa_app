@@ -5,9 +5,10 @@ import os
 from tkinter import PhotoImage
 
 class Capa2:
-    def __init__(self, canvas, vidas, base_path):
+    def __init__(self, canvas, vidas, base_path, tiempo_vida):
         self.canvas = canvas
         self.base_path = base_path
+        self.tiempo_vida = tiempo_vida
         self.velocidad_base = 10
         self.vidas = vidas
         self.capas = []
@@ -28,7 +29,7 @@ class Capa2:
             direccion_x = random.choice([-1, 1])
             direccion_y = random.choice([-1, 1])
             tiempo_aparicion = time.time()
-            tiempo_vida = 7
+            tiempo_vida = self.tiempo_vida
             self.capas.append({
                 "capa": capa,
                 "velocidad": velocidad,
