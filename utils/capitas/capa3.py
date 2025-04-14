@@ -5,21 +5,22 @@ import os
 from tkinter import PhotoImage
 from tkinter import Canvas
 
-class Capa1:
+class Capa3:
     def __init__(self, canvas, vidas, base_path, tiempo_vida):
         self.canvas = canvas
         self.base_path = base_path
         self.tiempo_vida = tiempo_vida
-        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa1.png'))
+        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa3.png'))
         self.velocidad_base = 3
         self.vidas = vidas
         self.capas = []
         self.vida_perdida = False
         self.i_velocidad = 0
-        self.cantidad = 5
+        self.cantidad = 1
 
-        
+        self.imagen_pequena = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa3_small.png'))
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
+        self.sonido_division = pygame.mixer.Sound(os.path.join(self.base_path, "src/sounds/burbuja.wav"))
 
     def crear_capas(self):
         """Crea una cantidad de capas con posiciones y velocidades aleatorias."""
@@ -45,6 +46,35 @@ class Capa1:
                 "tiempo_vida": tiempo_vida
             })
 
+    def dividir_capa(self, capa):
+        """Divide una capa en 3 capas más pequeñas."""
+        pos = self.canvas.coords(capa["capa"])
+        
+        self.eliminar_capa(capa)
+        for _ in range(3):
+            nueva_capa = self.canvas.create_image(
+                pos[0] + random.randint(-20, 20),
+                pos[1] + random.randint(-20, 20),
+                image=self.imagen_pequena
+            )
+            velocidad = random.uniform(
+                self.velocidad_base + self.i_velocidad,
+                self.velocidad_base + 2 + self.i_velocidad
+            )
+            direccion_x = random.choice([-1, 1])
+            direccion_y = random.choice([-1, 1])
+            tiempo_aparicion = time.time()
+            tiempo_vida = self.tiempo_vida
+            self.capas.append({
+                "capa": nueva_capa,
+                "velocidad": velocidad,
+                "direccion_x": direccion_x,
+                "direccion_y": direccion_y,
+                "tiempo_aparicion": tiempo_aparicion,
+                "tiempo_vida": tiempo_vida,
+                "es_pequena": True
+            })
+
     def mover_capas(self):
         """Mueve las capas en el canvas y gestiona colisiones con los bordes."""
         for capa in self.capas[:]:
@@ -68,7 +98,6 @@ class Capa1:
         self.canvas.delete(capa["capa"])
 
     def eliminar_vida(self):
-        """Reduce las vidas si una capa ha desaparecido."""
         if self.vida_perdida:
             self.sonido_perder_vida.play()
             self.vidas -= 1
@@ -80,13 +109,19 @@ class Capa1:
         for capa in self.capas:
             capa_bbox = self.canvas.bbox(capa["capa"])
             if self.colision(disparo_bbox, capa_bbox):
-                self.eliminar_capa(capa)
+                if not capa.get("es_pequena", False):
+                    self.dividir_capa(capa)
+                    self.sonido_division.play()
+                else:
+                    self.eliminar_capa(capa)
                 return True
         return False
 
     def actualizar(self):
         """Actualiza el estado de las capas: movimiento, eliminación y creación."""
         self.mover_capas()
+        if not self.capas:
+            self.i_velocidad += 0.5
         return self.eliminar_vida()
 
     @staticmethod

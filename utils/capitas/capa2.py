@@ -10,22 +10,27 @@ class Capa2:
         self.base_path = base_path
         self.tiempo_vida = tiempo_vida
         self.velocidad_base = 10
+        self.i_velocidad = 0
         self.vidas = vidas
         self.capas = []
         self.vida_perdida = False
 
-        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa1.png'))
+        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa2.png'))
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
 
         self.cantidad = 1
 
     def crear_capas(self):
+        """Crea una cantidad de capas con posiciones y velocidades aleatorias."""
         self.capas = []
         for _ in range(self.cantidad):
             capa = self.canvas.create_image(
                 random.randint(50, 750), random.randint(50, 275), image=self.imagen
             )
-            velocidad = random.randint(self.velocidad_base, self.velocidad_base + 10)
+            velocidad = random.uniform(
+                self.velocidad_base + self.i_velocidad,
+                self.velocidad_base + 2 + self.i_velocidad  # Incremento acumulativo
+            )
             direccion_x = random.choice([-1, 1])
             direccion_y = random.choice([-1, 1])
             tiempo_aparicion = time.time()
@@ -61,6 +66,7 @@ class Capa2:
 
     def eliminar_vida(self):
         if self.vida_perdida:
+            self.sonido_perder_vida.play()
             self.vidas -= 1
             self.vida_perdida = False
         return self.vidas
@@ -75,8 +81,6 @@ class Capa2:
 
     def actualizar(self):
         self.mover_capas()
-        if not self.capas:
-            self.crear_capas()
         return self.eliminar_vida()
 
     @staticmethod
