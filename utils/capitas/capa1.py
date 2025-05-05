@@ -17,12 +17,13 @@ class Capa1:
         self.vida_perdida = False
         self.i_velocidad = 0
         self.cantidad = 5
+        self.puntuacion = 10
 
         
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
 
     def crear_capas(self):
-        """Crea una cantidad de capas con posiciones y velocidades aleatorias."""
+        """Crea los capitas, cada uno con velociadad y sitio aleatorio."""
         self.capas = []
         for _ in range(self.cantidad):
             capa = self.canvas.create_image(
@@ -46,7 +47,7 @@ class Capa1:
             })
 
     def mover_capas(self):
-        """Mueve las capas en el canvas y gestiona colisiones con los bordes."""
+        """Mover a los capas en el canvas y gestiona colisiones con los bordes."""
         for capa in self.capas[:]:
             self.canvas.move(
                 capa["capa"],
@@ -63,12 +64,12 @@ class Capa1:
                 self.eliminar_capa(capa)
 
     def eliminar_capa(self, capa):
-        """Elimina una capa del canvas y de la lista."""
+        """Elimina a un capa del canvas y de la lista."""
         self.capas.remove(capa)
         self.canvas.delete(capa["capa"])
 
     def eliminar_vida(self):
-        """Reduce las vidas si una capa ha desaparecido."""
+        """Reduce las vidas si algun capa sobrevivio."""
         if self.vida_perdida:
             self.sonido_perder_vida.play()
             self.vidas -= 1
@@ -76,7 +77,7 @@ class Capa1:
         return self.vidas
 
     def verificar_colision(self, disparo_bbox):
-        """Verifica si un disparo colisiona con alguna capa."""
+        """Verifica si capita se llevo mochazo."""
         for capa in self.capas:
             capa_bbox = self.canvas.bbox(capa["capa"])
             if self.colision(disparo_bbox, capa_bbox):
@@ -85,7 +86,7 @@ class Capa1:
         return False
 
     def actualizar(self):
-        """Actualiza el estado de las capas: movimiento, eliminación y creación."""
+        """Actualiza el estado de capa: movimiento, eliminación y creación."""
         self.mover_capas()
         return self.eliminar_vida()
 

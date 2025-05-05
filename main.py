@@ -5,6 +5,7 @@ import pandas as pd
 from utils.capitas.capa1 import Capa1
 from utils.capitas.capa2 import Capa2
 from utils.capitas.capa3 import Capa3
+from utils.capitas.capa4 import Capa4
 import csv
 from datetime import datetime
 import random
@@ -51,8 +52,9 @@ class Main(Frame):
         self.capa1 = Capa1(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa2 = Capa2(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa3 = Capa3(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
+        self.capa4 = Capa4(self.canvas, self. vidas, self.base_path, self.tiempo_vida)
 
-        self.capas = [self.capa1, self.capa2, self.capa3]
+        self.capas = [self.capa1, self.capa2, self.capa3, self.capa4]
         
     def mostrar_pantalla_inicio(self):
         self.juego_iniciado = False
@@ -80,9 +82,9 @@ class Main(Frame):
         self.root.unbind("<Button-1>")
         self.root.after(100, lambda: self.root.bind("<Button-1>", self.disparar))
         self.score = 0
-        self.vidas = 1 if modo_durisimo else 3
+        self.vidas = 1 if self.modo_durisimo else 3
         self.fallos = 0
-        self.rondas_superadas = 0 if not modo_durisimo else None
+        self.rondas_superadas = 0 if not self.modo_durisimo else None
         self.canvas.create_image(400, 200, image=self.fondo)
 
         self.mira = self.canvas.create_image(0, 0, image=self.imagen_mira)
@@ -90,15 +92,9 @@ class Main(Frame):
         self.canvas.bind("<Motion>", self.mover_mira)
 
         if modo_durisimo:
-            self.capa1.vidas=1
-            self.capa2.vidas=1
-            self.capa3.vidas=1
-            self.capa1.cantidad = 5
-            self.capa1.crear_capas()
-            self.capa2.cantidad = 1
-            self.capa2.crear_capas()
-            self.capa3.cantidad = 1
-            self.capa3.crear_capas()
+            for capa in self.capas:
+                capa.vidas=self.vidas
+                capa.crear_capas()
 
         self.root.after(100, self.actualizar_objetos)
         
@@ -121,13 +117,14 @@ class Main(Frame):
         for capa in self.capas:
             if capa.verificar_colision(disparo_bbox):
                 self.canvas.delete(disparo)
-                self.score += 10 if capa == self.capa1 else 20 if capa == self.capa2 else 30
+                self.score+=capa.puntuacion
                 self.actualizar_puntuacion()
                 if self.sonido_activo:
                     self.sonido_explosion.play()
                 return
 
         self.fallos += 1
+        self.score-=2
         self.actualizar_puntuacion()
     
     def dibujar_mira(self, event):
@@ -153,11 +150,9 @@ class Main(Frame):
 
         if nueva_ronda:
             if self.modo_durisimo:
-                self.capa1.crear_capas()
-                self.capa2.cantidad = 1
-                self.capa2.crear_capas()
-                self.capa3.cantidad = 1
-                self.capa3.crear_capas()
+                for capa in self.capas:
+                    capa.crear_capas()
+              
             else:
                 self.rondas_superadas += 1
                 print(f"Ronda {self.rondas_superadas} iniciada")
@@ -172,16 +167,19 @@ class Main(Frame):
         self.capa1.i_velocidad += 0.5
 
         if self.rondas_superadas >= 5 and random.random() <= 0.5:
-            self.capa2.cantidad = 1
             self.capa1.cantidad-=1
             self.capa2.crear_capas()
 
         if self.rondas_superadas >= 7 and random.random() <= 1/3:
-            self.capa3.cantidad = 1
             self.capa1.cantidad-=1
             self.capa3.crear_capas()
+
+        if self.rondas_superadas >=9 and random.random() <= 1/4:
+            self.capa1.cantidad-=1
+            self.capa4.crear_capas()
+
         self.capa1.crear_capas()
-        self.capa3.i_velocidad = self.capa1.i_velocidad
+        self.capa3.i_velocidad = self.capa1.i_velocidad+10
 
     def actualizar_puntuacion(self):
         self.canvas.delete("score")
@@ -199,7 +197,8 @@ class Main(Frame):
         self.canvas.create_text(400, 150, text="¡Game Over!", font=("Arial", 32), fill="red")
         self.canvas.create_text(400, 200, text=f"Puntuación final: {self.score}", font=("Arial", 24), fill="white")
         self.canvas.create_text(400, 230, text=f"Fallos: {self.fallos}", font=("Arial", 24), fill="white")
-        self.canvas.create_text(400, 260, text=f"Rondas superadas: {self.rondas_superadas}", font=("Arial", 24), fill="white")
+        if not self.modo_durisimo:
+            self.canvas.create_text(400, 260, text=f"Rondas superadas: {self.rondas_superadas}", font=("Arial", 24), fill="white")
         self.canvas.create_text(400, 300, text="Haz clic para volver al menú", font=("Arial", 24), fill="white")        
         with open(os.path.join(self.base_path, "puntuaciones.csv"), mode="a", newline="") as file:
             writer = csv.writer(file)
