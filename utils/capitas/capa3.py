@@ -18,7 +18,7 @@ class Capa3:
         self.i_velocidad = 0
         self.cantidad = 1
         self.cantidad_mini = 3
-        self.puntuacion = 10
+        self.puntuacion = 15
 
         self.imagen_pequena = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa3_small.png'))
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
@@ -92,9 +92,8 @@ class Capa3:
                 self.eliminar_capa(capa)
 
     def eliminar_capa(self, capa):
-        for capa in self.capas:
-            if capa.get("capita_mini", True): self.puntuacion=5
-            else: self.puntuacion=15
+        if capa.get("capita_mini", True): self.puntuacion=5
+        else: self.puntuacion=15
         self.capas.remove(capa)
         self.canvas.delete(capa["capa"])
 

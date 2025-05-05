@@ -3,28 +3,27 @@ import time
 import pygame
 import os
 from tkinter import PhotoImage
-from tkinter import Canvas
 
-class Capa4:
+class Capa6:
     def __init__(self, canvas, vidas, base_path, tiempo_vida):
         self.canvas = canvas
         self.base_path = base_path
         self.tiempo_vida = tiempo_vida
-        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa4.png'))
-        self.velocidad_base = 2
+        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa6.png'))
+        self.velocidad_base = 13
         self.vidas = vidas
         self.capas = []
         self.vida_perdida = False
         self.i_velocidad = 0
         self.cantidad = 1
-        self.puntuacion = 0
+        self.puntuacion = 35
 
+        
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
-        self.num_escudos = 1
 
     def crear_capas(self):
         self.capas = []
-        for i in range(self.cantidad):
+        for _ in range(self.cantidad):
             capa = self.canvas.create_image(
                 random.randint(50, 750), random.randint(50, 275), image=self.imagen
             )
@@ -32,22 +31,12 @@ class Capa4:
                 self.velocidad_base + self.i_velocidad,
                 self.velocidad_base + 4 + self.i_velocidad
             )
-            
             direccion_x = random.choice([-1, 1])
             direccion_y = random.choice([-1, 1])
             tiempo_aparicion = time.time()
             tiempo_vida = self.tiempo_vida
-
-            escudo = self.canvas.create_rectangle(
-                self.canvas.bbox(capa),
-                fill="blue",
-                stipple="gray50",
-                state="hidden"
-            )
-
             self.capas.append({
                 "capa": capa,
-                "escudo": escudo,
                 "velocidad": velocidad,
                 "direccion_x": direccion_x,
                 "direccion_y": direccion_y,
@@ -55,40 +44,49 @@ class Capa4:
                 "tiempo_vida": tiempo_vida
             })
 
-    def mover_capas(self):
+    def mover_capas(self, puntero_x, puntero_y):
         for capa in self.capas:
-            self.canvas.move(
-                capa["capa"],
-                capa["velocidad"] * capa["direccion_x"],
-                capa["velocidad"] * capa["direccion_y"]
-            )
             pos = self.canvas.coords(capa["capa"])
-            self.canvas.coords(capa["escudo"], *self.canvas.bbox(capa["capa"]))
+            x, y = pos[0], pos[1]
 
-            if self.num_escudos > 0:
-                self.canvas.itemconfig(capa["escudo"], state="normal")
+            distancia_x = puntero_x - x
+            distancia_y = puntero_y - y
+            distancia_total = max((distancia_x**2 + distancia_y**2)**0.5, 0.01)
+
+            if distancia_total < 150:
+                capa["direccion_x"] = -(distancia_x / distancia_total)
+                capa["direccion_y"] = -(distancia_y / distancia_total)
             else:
-                self.canvas.itemconfig(capa["escudo"], state="hidden")
+                pass
+            velocidad = random.uniform(
+                self.velocidad_base + self.i_velocidad,
+                self.velocidad_base + 4 + self.i_velocidad
+            )
 
-            if pos[0] <= 0 or pos[0] >= 800:
-                capa["direccion_x"] *= -1
-            if pos[1] <= 0 or pos[1] >= 400:
-                capa["direccion_y"] *= -1
+            dx = velocidad * capa["direccion_x"]
+            dy = velocidad * capa["direccion_y"]
+
+            margen = 40
+            if x < margen:
+                dx += 1
+            elif x > 800 - margen:
+                dx -= 1
+            if y < margen:
+                dy += 1
+            elif y > 400 - margen:
+                dy -= 1
+
+            self.canvas.move(capa["capa"], dx, dy)
+
             if time.time() - capa["tiempo_aparicion"] > capa["tiempo_vida"]:
                 self.vida_perdida = True
                 self.eliminar_capa(capa)
 
+
     def eliminar_capa(self, capa):
-        if self.num_escudos > 0:
-            self.num_escudos -= 1
-            capa["velocidad"] *=2
-        else:
-            self.puntuacion=30
-            self.capas.remove(capa)
-            self.canvas.delete(capa["capa"])
-            self.canvas.delete(capa["escudo"])
-            self.num_escudos=1
-    
+        self.capas.remove(capa)
+        self.canvas.delete(capa["capa"])
+
     def eliminar_vida(self):
         if self.vida_perdida:
             self.sonido_perder_vida.play()
@@ -104,11 +102,11 @@ class Capa4:
                 return True
         return False
 
-    def actualizar(self):
-        self.mover_capas()
-        if not self.capas:
-            self.i_velocidad += 0.5
+    def actualizar(self, puntero_x=None, puntero_y=None):
+        if puntero_x is not None and puntero_y is not None:
+            self.mover_capas(puntero_x, puntero_y)
         return self.eliminar_vida()
+
 
     @staticmethod
     def colision(bbox1, bbox2):

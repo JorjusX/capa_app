@@ -3,28 +3,26 @@ import time
 import pygame
 import os
 from tkinter import PhotoImage
-from tkinter import Canvas
 
-class Capa4:
+class Capa5:
     def __init__(self, canvas, vidas, base_path, tiempo_vida):
         self.canvas = canvas
         self.base_path = base_path
         self.tiempo_vida = tiempo_vida
-        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa4.png'))
-        self.velocidad_base = 2
+        self.imagen = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/capa5.png'))
+        self.velocidad_base = 15
         self.vidas = vidas
         self.capas = []
         self.vida_perdida = False
         self.i_velocidad = 0
         self.cantidad = 1
-        self.puntuacion = 0
+        self.puntuacion = 35
 
         self.sonido_perder_vida = pygame.mixer.Sound(os.path.join(self.base_path, 'src/sounds/capa.wav'))
-        self.num_escudos = 1
 
     def crear_capas(self):
         self.capas = []
-        for i in range(self.cantidad):
+        for _ in range(self.cantidad):
             capa = self.canvas.create_image(
                 random.randint(50, 750), random.randint(50, 275), image=self.imagen
             )
@@ -32,22 +30,12 @@ class Capa4:
                 self.velocidad_base + self.i_velocidad,
                 self.velocidad_base + 4 + self.i_velocidad
             )
-            
             direccion_x = random.choice([-1, 1])
             direccion_y = random.choice([-1, 1])
             tiempo_aparicion = time.time()
             tiempo_vida = self.tiempo_vida
-
-            escudo = self.canvas.create_rectangle(
-                self.canvas.bbox(capa),
-                fill="blue",
-                stipple="gray50",
-                state="hidden"
-            )
-
             self.capas.append({
                 "capa": capa,
-                "escudo": escudo,
                 "velocidad": velocidad,
                 "direccion_x": direccion_x,
                 "direccion_y": direccion_y,
@@ -56,39 +44,33 @@ class Capa4:
             })
 
     def mover_capas(self):
-        for capa in self.capas:
+        for capa in self.capas[:]:
             self.canvas.move(
                 capa["capa"],
                 capa["velocidad"] * capa["direccion_x"],
                 capa["velocidad"] * capa["direccion_y"]
             )
+            
             pos = self.canvas.coords(capa["capa"])
-            self.canvas.coords(capa["escudo"], *self.canvas.bbox(capa["capa"]))
+            x, y = pos[0], pos[1]
 
-            if self.num_escudos > 0:
-                self.canvas.itemconfig(capa["escudo"], state="normal")
-            else:
-                self.canvas.itemconfig(capa["escudo"], state="hidden")
-
-            if pos[0] <= 0 or pos[0] >= 800:
+            if x <= 0 or x >= 800:
                 capa["direccion_x"] *= -1
-            if pos[1] <= 0 or pos[1] >= 400:
+            if y <= 0 or y >= 400:
                 capa["direccion_y"] *= -1
+
+            if random.random() < 0.2:
+                capa["direccion_x"] = random.choice([-1, 1])
+                capa["direccion_y"] = random.choice([-1, 1])
+
             if time.time() - capa["tiempo_aparicion"] > capa["tiempo_vida"]:
                 self.vida_perdida = True
                 self.eliminar_capa(capa)
 
     def eliminar_capa(self, capa):
-        if self.num_escudos > 0:
-            self.num_escudos -= 1
-            capa["velocidad"] *=2
-        else:
-            self.puntuacion=30
-            self.capas.remove(capa)
-            self.canvas.delete(capa["capa"])
-            self.canvas.delete(capa["escudo"])
-            self.num_escudos=1
-    
+        self.capas.remove(capa)
+        self.canvas.delete(capa["capa"])
+
     def eliminar_vida(self):
         if self.vida_perdida:
             self.sonido_perder_vida.play()
@@ -106,8 +88,6 @@ class Capa4:
 
     def actualizar(self):
         self.mover_capas()
-        if not self.capas:
-            self.i_velocidad += 0.5
         return self.eliminar_vida()
 
     @staticmethod
