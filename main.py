@@ -1,29 +1,41 @@
 from tkinter import *
+from datetime import datetime
+from PIL import Image, ImageTk, ImageOps
 import pygame
 import os
 import pandas as pd
+import csv
+import random
 from utils.capitas.capa1 import Capa1
 from utils.capitas.capa2 import Capa2
 from utils.capitas.capa3 import Capa3
 from utils.capitas.capa4 import Capa4
 from utils.capitas.capa5 import Capa5
 from utils.capitas.capa6 import Capa6
-import csv
-from datetime import datetime
-import random
 
 class Main(Frame):
     def __init__(self, master):
         super().__init__(master)
         self.root = master
-
+        self.screen_width = root.winfo_screenwidth()
+        self.screen_height = root.winfo_screenheight()
         self.base_path = os.path.dirname(os.path.abspath(__file__))
 
-        self.fondo = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/fondo.png'))
-        self.canvas = Canvas(self.root, width=800, height=400)
-        self.canvas.config(width=1920, height=678)
-        self.canvas.pack()
+        self.canvas = Canvas(self.root, width=self.screen_width, height=self.screen_height)
+        self.canvas.pack(fill="both", expand=True)
         
+        self.fondo_ruta = os.path.join(self.base_path, "src/imgs/fondo.png")
+
+        if not os.path.exists(self.fondo_ruta):
+            print(f"⚠️ No se encontró la imagen: {self.fondo_ruta}")
+            exit(1)
+        self.fondo_original = Image.open(self.fondo_ruta)
+
+        self.fondo_imagen = None
+        self.fondo_id = None
+
+        self.root.bind("<Configure>", self.actualizar_fondo)
+
         self.imagen_mira = PhotoImage(file=os.path.join(self.base_path, 'src/imgs/mira.png'))
         self.puntuaciones = open("puntuaciones.csv")
                 
@@ -54,7 +66,7 @@ class Main(Frame):
         self.capa1 = Capa1(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa2 = Capa2(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa3 = Capa3(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
-        self.capa4 = Capa4(self.canvas, self. vidas, self.base_path, self.tiempo_vida)
+        self.capa4 = Capa4(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa5 = Capa5(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa6 = Capa6(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
 
@@ -65,26 +77,42 @@ class Main(Frame):
         self.juego_iniciado = False
         self.canvas.delete("all")
         self.canvas.unbind("<Button-1>")
-        self.canvas.create_image(400, 200, image=self.fondo)
-        self.canvas.create_text(402, 152, text="Tiro al Capa", font=("Arial", 32), fill="black")
-        self.canvas.create_text(400, 150, text="Tiro al Capa", font=("Arial", 32), fill="white")
-        self.canvas.create_text(402, 202, text="Haz clic para empezar", font=("Arial", 24), fill="black")
-        self.canvas.create_text(400, 200, text="Haz clic para empezar", font=("Arial", 24), fill="white")
-        
-        self.canvas.create_rectangle(50, 350, 250, 250, fill="skyblue", tags=("inicio",))
-        self.canvas.create_text(150, 300, text="Modo normal", font=("Arial", 24), fill="purple", tags=("inicio",))
-        self.canvas.create_text(150, 325, text=f"Puntuacion maxima: {self.hight_score}", font=("Arial", 10), fill="purple", tags=("inicio",))
 
-        self.canvas.create_rectangle(550, 350, 750, 250, fill="skyblue", tags=("inicio2",))
-        self.canvas.create_text(650, 300, text="Modo durisimo", font=("Arial", 20), fill="darkred", tags=("inicio2",))
+        self.actualizar_fondo()
 
-        self.canvas.create_rectangle(300, 350, 500, 250, fill="skyblue", tags=("inicio3",))
-        self.canvas.create_text(400, 300, text="Modo chill", font=("Arial", 20), fill="white", tags=("inicio3",))
+        w = self.canvas.winfo_width()
+        h = self.canvas.winfo_height()
+
+        self.canvas.create_text(w // 2 + 2, h // 6 - 48, text="Tiro al Capa", font=("Arial", int(h * 0.04)), fill="black")
+        self.canvas.create_text(w // 2, h // 6 - 50, text="Tiro al Capa", font=("Arial", int(h * 0.04)), fill="white")
+        self.canvas.create_text(w // 2 + 2, h // 6 + 2, text="Haz clic para empezar", font=("Arial", int(h * 0.03)), fill="black")
+        self.canvas.create_text(w // 2, h // 6, text="Haz clic para empezar", font=("Arial", int(h * 0.03)), fill="white")
+
+        boton_ancho = w * 0.2
+        boton_alto = h * 0.12
+        espacio = w * 0.05
+
+        x1 = w * 0.1
+        x2 = w * 0.4
+        x3 = w * 0.7
+        y_top = h * 0.55
+        y_bottom = y_top + boton_alto
+
+        self.canvas.create_rectangle(x1, y_top, x1 + boton_ancho, y_bottom, fill="skyblue", tags=("inicio",))
+        self.canvas.create_text(x1 + boton_ancho / 2, y_top + boton_alto / 2 - 10,
+                                text="Modo normal", font=("Arial", int(h * 0.025)), fill="purple", tags=("inicio",))
+        self.canvas.create_text(x1 + boton_ancho / 2, y_top + boton_alto / 2 + 20, text=f"Puntuacion máxima: {self.hight_score}", font=("Arial", int(h * 0.015)), fill="purple", tags=("inicio",))
+
+        self.canvas.create_rectangle(x2, y_top, x2 + boton_ancho, y_bottom, fill="skyblue", tags=("inicio3",))
+        self.canvas.create_text(x2 + boton_ancho / 2, y_top + boton_alto / 2,text="Modo chill", font=("Arial", int(h * 0.025)), fill="white", tags=("inicio3",))
+ 
+        self.canvas.create_rectangle(x3, y_top, x3 + boton_ancho, y_bottom, fill="skyblue", tags=("inicio2",))
+        self.canvas.create_text(x3 + boton_ancho / 2, y_top + boton_alto / 2, text="Modo durísimo", font=("Arial", int(h * 0.025)), fill="darkred", tags=("inicio2",))
 
         self.canvas.tag_bind("inicio", "<Button-1>", lambda event: self.iniciar_juego(event, modo_durisimo=False, modo_clasico=False))
         self.canvas.tag_bind("inicio2", "<Button-1>", lambda event: self.iniciar_juego(event, modo_durisimo=True, modo_clasico=False))
         self.canvas.tag_bind("inicio3", "<Button-1>", lambda event: self.iniciar_juego(event, modo_durisimo=False, modo_clasico=True))
-               
+
     def iniciar_juego(self, event, modo_durisimo, modo_clasico):
         self.juego_iniciado = True
         self.modo_durisimo = modo_durisimo
@@ -245,11 +273,31 @@ class Main(Frame):
         self.capa1 = Capa1(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa2 = Capa2(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa3 = Capa3(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
-        self.capa4 = Capa4(self.canvas, self. vidas, self.base_path, self.tiempo_vida)
+        self.capa4 = Capa4(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa5 = Capa5(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
         self.capa6 = Capa6(self.canvas, self.vidas, self.base_path, self.tiempo_vida)
 
         self.capas = [self.capa1, self.capa2, self.capa3, self.capa4, self.capa5, self.capa6]
+
+    def actualizar_fondo(self, event=None):
+        ancho = self.canvas.winfo_width()
+        alto = self.canvas.winfo_height()
+
+        if ancho < 10 or alto < 10:
+            self.root.after(100, self.actualizar_fondo)
+            return
+
+        fondo_actualizado = self.fondo_original.resize((ancho, alto), Image.Resampling.LANCZOS)
+        self.fondo_imagen = ImageTk.PhotoImage(fondo_actualizado)
+
+        if self.fondo_id is not None:
+            self.canvas.itemconfig(self.fondo_id, image=self.fondo_imagen)
+        else:
+            self.fondo_id = self.canvas.create_image(0, 0, anchor="nw", image=self.fondo_imagen)
+
+        self.canvas.tag_lower(self.fondo_id)
+
+
 
     def mejor_puntuacion(self):
         try:
@@ -266,8 +314,10 @@ class Main(Frame):
 if __name__ == "__main__":
     root = Tk()
     root.title('Tiro al Capa')
-    root.geometry('800x400')
-    root.call('wm', 'iconphoto', root._w, PhotoImage(file=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src/imgs/capa_icon.png')))
+    root.attributes('-fullscreen', True)
+    icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src/imgs/capa_icon.png')
+    icon_img = PhotoImage(file=icon_path)
+    root.call('wm', 'iconphoto', root._w, icon_img)
     app = Main(root)
     root.resizable(False, False)
     app.mainloop()
